@@ -35,7 +35,7 @@ object Initializing extends InitState
 
 object Initialized extends InitState
 
-object Ready extends InitState
+object Started extends InitState
 
 case class References(queue: scala.collection.immutable.HashMap[String, Option[ActorRef]])
 
@@ -102,14 +102,14 @@ class FSMSoftshakeMediator extends Actor with FSM[InitState, References] with St
     case Event(m@tech.EventSubscribed(name, module, method), References(h)) =>
       log.info(s"Subscribed to $m")
       h(naoText).map(_ ! txt.Say("Je suis pret"))
-      goto(Ready)
+      goto(Started)
     case Event(InfoState, _) =>
-      sender() ! "Initialized, waiting to be ready ..."
+      sender() ! "Initialized, waiting to start ..."
       stay()
 
   }
 
-  when(Ready) {
+  when(Started) {
     case Event(m: txt.Say, References(h)) =>
       sendSay(m, h)
       stay()
@@ -120,7 +120,7 @@ class FSMSoftshakeMediator extends Actor with FSM[InitState, References] with St
         fsmDayNightActor ! LightSwitchedOff(values.toString.toInt, h)
       stay()
     case Event(InfoState, _) =>
-      sender() ! "Ready"
+      sender() ! "Started"
       stay()
     case Event(m@_, References(h)) =>
       log.info(s"UNKNOWN MESSAGE: $m")
@@ -132,8 +132,8 @@ class FSMSoftshakeMediator extends Actor with FSM[InitState, References] with St
       log.info("Transition to Initialized, unstash the messages ...")
       fsmDayNightActor = context.actorOf(Props(classOf[FSMDayNight], nextStateData.queue), "daynight")
       unstashAll()
-    case Initialized -> Ready =>
-      log.info("Transition to Ready")
+    case Initialized -> Started =>
+      log.info("Transition to Started")
 
 
   }
@@ -158,9 +158,9 @@ class FSMSoftshakeMediator extends Actor with FSM[InitState, References] with St
  */
 object FSMSoftshakeMediator {
 
-  val robotIP = "sonny.local"
+  val robotIP = "192.168.1.76"
   val robotPort = "2552"
-  val remoteAkkaContext = s"akka.tcp://NaoApplication@$robotIP:$robotPort"
+  val remoteAkkaContext = s"akka.tcp://naoSystem@$robotIP:$robotPort"
   val naoEvt = s"$remoteAkkaContext/user/nao/evt"
   val naoCmd = s"$remoteAkkaContext/user/nao/cmd"
   val naoText = s"$remoteAkkaContext/user/nao/cmd/text"
