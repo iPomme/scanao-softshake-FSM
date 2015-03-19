@@ -48,7 +48,7 @@ case class References(queue: scala.collection.immutable.HashMap[String, Option[A
 class FSMSoftshakeMediator extends Actor with FSM[InitState, References] with Stash with ActorLogging {
   //with ActorTracing {
 
-  var fsmDayNightActor: ActorRef = _
+  lazy val fsmDayNightActor = context.actorOf(Props(classOf[FSMDayNight], nextStateData.queue), "daynight")
 
   def listActorRef = {
     // Get the reference to the Nao actors
@@ -130,7 +130,6 @@ class FSMSoftshakeMediator extends Actor with FSM[InitState, References] with St
   onTransition {
     case Initializing -> Initialized =>
       log.info("Transition to Initialized, unstash the messages ...")
-      fsmDayNightActor = context.actorOf(Props(classOf[FSMDayNight], nextStateData.queue), "daynight")
       unstashAll()
     case Initialized -> Started =>
       log.info("Transition to Started")
@@ -148,7 +147,7 @@ class FSMSoftshakeMediator extends Actor with FSM[InitState, References] with St
   def sendSay(msg: txt.Say, ref: HashMap[String, Option[ActorRef]]) {
     log.info(s"Got the message $msg to send to ${ref(naoText)}")
     traceSay(msg) {
-      ref(naoText).get ! msg
+      ref(naoText).map(_ ! msg)
     }
   }
 }

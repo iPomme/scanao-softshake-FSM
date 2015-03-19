@@ -12,7 +12,7 @@ import org.apache.karaf.shell.console.OsgiCommandSupport
 class SoftShakeCommands extends OsgiCommandSupport {
 
   @Argument(index = 0, name = "action", description = "The action to perform on the service. Could be start | count", required = true, multiValued = false)
-  var key: String = null
+  var key: String = None.orNull
 
   protected def doExecute: String = {
     val srvName = classOf[SoftShakeService].getName()
@@ -33,7 +33,7 @@ class SoftShakeCommands extends OsgiCommandSupport {
       case (None, _) => println(s"Command '$key' not executed !")
       case (_, _) => println(s"'$key' is an unknown command")
     }
-    null
+    None.orNull
   }
 
 }
